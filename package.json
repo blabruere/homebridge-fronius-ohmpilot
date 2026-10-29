@@ -1,6 +1,6 @@
 {
   "name": "homebridge-fronius-ohmpilot-temperature",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Homebridge accessory plugin that exposes the Fronius Ohmpilot temperature as a HomeKit TemperatureSensor.",
   "main": "index.js",
   "scripts": {
