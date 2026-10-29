@@ -1,10 +1,24 @@
-const axios = require('axios');
-
 let Service;
 let Characteristic;
 
 // Ohmpilot state code (valState in values.xml / CodeOfState in the Solar API)
 const OHMPILOT_STATE_BOOST = 5;
+
+const REQUEST_TIMEOUT_MS = 5000;
+
+async function httpGet(url) {
+  let response;
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  } catch (error) {
+    // fetch only says "fetch failed"; surface the network reason (ECONNREFUSED, timeout...)
+    throw new Error(error?.cause?.message || error?.message || String(error));
+  }
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} from ${url}`);
+  }
+  return response;
+}
 
 module.exports = (api) => {
   Service = api.hap.Service;
@@ -113,11 +127,8 @@ class OhmpilotAccessory {
     const url = `http://${this.host}/solar_api/v1/GetOhmPilotRealtimeData.cgi?Scope=System`;
 
     try {
-      const response = await axios.get(url, {
-        timeout: 5000,
-      });
-
-      const data = response?.data;
+      const response = await httpGet(url);
+      const data = await response.json();
       const temperature =
         data &&
         data.Body &&
@@ -163,7 +174,7 @@ class OhmpilotAccessory {
     }
 
     try {
-      await axios.get(`http://${this.ohmpilotHost}/setboost.cgi`, { timeout: 5000 });
+      await httpGet(`http://${this.ohmpilotHost}/setboost.cgi`);
       this.log.info(`Ohmpilot boost turned ${wanted ? 'ON' : 'OFF'}.`);
       this.boostActive = wanted;
     } catch (error) {
@@ -194,12 +205,10 @@ class OhmpilotAccessory {
     const url = `http://${this.ohmpilotHost}/values.xml`;
 
     try {
-      const response = await axios.get(url, {
-        timeout: 5000,
-        responseType: 'text',
-      });
+      const response = await httpGet(url);
+      const xml = await response.text();
 
-      const match = /<value id="valState">\s*(\d+)\s*<\/value>/.exec(response?.data || '');
+      const match = /<value id="valState">\s*(\d+)\s*<\/value>/.exec(xml);
       if (!match) {
         this.log.error('Unexpected Ohmpilot values.xml content, missing valState.');
         return undefined;
