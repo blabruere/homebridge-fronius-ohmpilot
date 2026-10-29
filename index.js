@@ -11,18 +11,18 @@ module.exports = (api) => {
   Characteristic = api.hap.Characteristic;
 
   api.registerAccessory(
-    'homebridge-fronius-ohmpilot-temperature',
-    'FroniusOhmpilotTemperature',
-    FroniusOhmpilotTemperatureAccessory,
+    'homebridge-fronius-ohmpilot',
+    'Ohmpilot',
+    OhmpilotAccessory,
   );
 };
 
-class FroniusOhmpilotTemperatureAccessory {
+class OhmpilotAccessory {
   constructor(log, config, api) {
     this.log = log;
     this.api = api;
 
-    this.name = config.name || 'Ohmpilot Temperature';
+    this.name = config.name || 'Water temperature';
     this.host = config.host; // Inverter / Datamanager (Solar API)
     this.ohmpilotHost = config.ohmpilotHost; // Ohmpilot's own web interface
     this.pollInterval = Number(config.pollInterval) || 60; // seconds
@@ -215,7 +215,7 @@ class FroniusOhmpilotTemperatureAccessory {
   }
 
   identify(callback) {
-    this.log('Identify requested for Fronius Ohmpilot temperature accessory.');
+    this.log('Identify requested for Fronius Ohmpilot accessory.');
     callback();
   }
 
