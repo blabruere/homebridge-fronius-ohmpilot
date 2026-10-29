@@ -20,8 +20,8 @@ Add an accessory entry to your Homebridge `config.json`:
     {
       "accessory": "Ohmpilot",
       "name": "Water temperature",
-      "host": "192.168.1.50",
-      "ohmpilotHost": "192.168.1.211",
+      "host": "INVERTER IP",
+      "ohmpilotHost": "OHMPILOT IP",
       "boostName": "Ohmpilot Boost",
       "pollInterval": 60
     }
