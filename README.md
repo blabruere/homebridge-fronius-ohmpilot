@@ -1,4 +1,4 @@
-## homebridge-fronius-ohmpilot-temperature
+## homebridge-fronius-ohmpilot
 
 Homebridge accessory plugin that exposes the **Fronius Ohmpilot** temperature as a HomeKit `TemperatureSensor`, plus an optional **Boost** switch.
 
@@ -7,7 +7,7 @@ Homebridge accessory plugin that exposes the **Fronius Ohmpilot** temperature as
 From your Homebridge server (or via the UI):
 
 ```bash
-npm install -g homebridge-fronius-ohmpilot-temperature
+npm install -g homebridge-fronius-ohmpilot
 ```
 
 ### Configuration
@@ -18,8 +18,8 @@ Add an accessory entry to your Homebridge `config.json`:
 {
   "accessories": [
     {
-      "accessory": "FroniusOhmpilotTemperature",
-      "name": "Ohmpilot Temperature",
+      "accessory": "Ohmpilot",
+      "name": "Water temperature",
       "host": "192.168.1.50",
       "ohmpilotHost": "192.168.1.211",
       "boostName": "Ohmpilot Boost",
@@ -29,8 +29,8 @@ Add an accessory entry to your Homebridge `config.json`:
 }
 ```
 
-- **accessory**: Must be `FroniusOhmpilotTemperature`.
-- **name**: The accessory name shown in HomeKit.
+- **accessory**: Must be `Ohmpilot`.
+- **name** (optional): The temperature sensor name shown in HomeKit. Default: `Water temperature`.
 - **host**: IP or hostname of the Fronius device that exposes the Ohmpilot API (e.g. Datamanager / inverter).
 - **ohmpilotHost** (optional): IP or hostname of the Ohmpilot's own web interface. Enables the Boost switch.
 - **boostName** (optional): Name of the Boost switch in HomeKit. Default: `Ohmpilot Boost`.
