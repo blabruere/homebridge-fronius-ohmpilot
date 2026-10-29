@@ -1,7 +1,7 @@
 {
-  "name": "homebridge-fronius-ohmpilot-temperature",
-  "version": "1.1.0",
-  "description": "Homebridge accessory plugin that exposes the Fronius Ohmpilot temperature as a HomeKit TemperatureSensor.",
+  "name": "homebridge-fronius-ohmpilot",
+  "version": "2.0.0",
+  "description": "Homebridge accessory plugin that exposes the Fronius Ohmpilot water temperature and a Boost switch in HomeKit.",
   "main": "index.js",
   "scripts": {
     "lint": "echo \"no lint configured\"",
