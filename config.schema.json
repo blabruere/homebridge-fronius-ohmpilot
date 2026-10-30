@@ -9,15 +9,13 @@
       "name": {
         "title": "Temperature sensor name",
         "type": "string",
-        "default": "Water temperature",
-        "required": true
+        "default": "Water temperature"
       },
       "host": {
         "title": "Inverter IP address",
         "type": "string",
         "placeholder": "192.168.1.50",
-        "description": "IP or hostname of the Fronius inverter / Datamanager that provides the Solar API.",
-        "required": true
+        "description": "IP or hostname of the Fronius inverter / Datamanager that provides the Solar API."
       },
       "ohmpilotHost": {
         "title": "Ohmpilot IP address",
@@ -44,7 +42,8 @@
         "minimum": 0,
         "description": "How long to wait after switching Boost before reading the state again."
       }
-    }
+    },
+    "required": ["name", "host"]
   },
   "layout": [
     "name",
