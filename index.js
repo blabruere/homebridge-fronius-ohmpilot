@@ -139,7 +139,7 @@ class OhmpilotAccessory {
       if (typeof temperature !== 'number') {
         this.log.error(
           'Unexpected Ohmpilot response structure or missing temperature. Got:',
-          JSON.stringify(data.Body.Data['0'].Details.Temperature_Channel_1),
+          JSON.stringify(data.Body.Data[0].Temperature_Channel_1),
         );
         return undefined;
       }
