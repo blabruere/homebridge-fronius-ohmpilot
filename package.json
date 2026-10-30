@@ -19,7 +19,8 @@
     "ohmpilot",
     "temperature",
     "boost",
-    "water-heater"
+    "water-heater",
+    "supports-hap"
   ],
   "repository": {
     "type": "git",
