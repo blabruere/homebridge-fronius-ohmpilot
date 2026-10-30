@@ -1,8 +1,14 @@
 {
   "name": "homebridge-fronius-ohmpilot",
-  "version": "2.0.1",
-  "description": "Homebridge accessory plugin that exposes the Fronius Ohmpilot water temperature and a Boost switch in HomeKit.",
+  "displayName": "Fronius Ohmpilot",
+  "version": "3.0.0",
+  "description": "Homebridge platform plugin that exposes the Fronius Ohmpilot water temperature and a Boost switch in HomeKit.",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "config.schema.json",
+    "README.md"
+  ],
   "scripts": {
     "lint": "echo \"no lint configured\"",
     "test": "echo \"no tests configured\""
@@ -11,14 +17,22 @@
     "homebridge-plugin",
     "fronius",
     "ohmpilot",
-    "temperature"
+    "temperature",
+    "boost",
+    "water-heater"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blabruere/homebridge-fronius-ohmpilot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/blabruere/homebridge-fronius-ohmpilot/issues"
+  },
+  "homepage": "https://github.com/blabruere/homebridge-fronius-ohmpilot#readme",
   "engines": {
-    "node": ">=18.0.0",
-    "homebridge": ">=1.6.0"
+    "node": "^22.0.0 || ^24.0.0",
+    "homebridge": "^1.8.0 || ^2.0.0-beta.0"
   },
   "author": "blabruere",
   "license": "MIT"
 }
-
-
