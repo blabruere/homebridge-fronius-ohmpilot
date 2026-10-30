@@ -123,8 +123,8 @@ class OhmpilotAccessory {
       this.log.error('No host configured for Fronius Ohmpilot temperature.');
       return undefined;
     }
-//{"Body":{"Data":{"0":{"CodeOfState":0,"Details":{"Hardware":"6","Manufacturer":"Fronius","Model":"Ohmpilot","Serial":"31553843","Software":"1.0.29-1"},"EnergyReal_WAC_Sum_Consumed":10211319,"PowerReal_PAC_Sum":0,"Temperature_Channel_1":46.6}}},"Head":{"RequestArguments":{"Scope":"System"},"Status":{"Code":0,"Reason":"","UserMessage":""},"Timestamp":"2026-10-30T09:08:48+00:00"}}
-    const url = `http://${this.host}/solar_api/v1/GetOhmPilotRealtimeData.cgi?Scope=System`;
+
+  const url = `http://${this.host}/solar_api/v1/GetOhmPilotRealtimeData.cgi?Scope=System`;
 
     try {
       const response = await httpGet(url);
@@ -139,7 +139,7 @@ class OhmpilotAccessory {
       if (typeof temperature !== 'number') {
         this.log.error(
           'Unexpected Ohmpilot response structure or missing temperature. Got:',
-          JSON.stringify(data.Body.Data[0].Temperature_Channel_1),
+          JSON.stringify(data.Body),
         );
         return undefined;
       }
