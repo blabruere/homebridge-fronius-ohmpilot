@@ -1,0 +1,61 @@
+{
+  "pluginAlias": "Ohmpilot",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "Shows the Fronius Ohmpilot water temperature in HomeKit, with an optional switch to turn Boost mode on and off.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Temperature sensor name",
+        "type": "string",
+        "default": "Water temperature",
+        "required": true
+      },
+      "host": {
+        "title": "Inverter IP address",
+        "type": "string",
+        "placeholder": "192.168.1.50",
+        "description": "IP or hostname of the Fronius inverter / Datamanager that provides the Solar API.",
+        "required": true
+      },
+      "ohmpilotHost": {
+        "title": "Ohmpilot IP address",
+        "type": "string",
+        "placeholder": "192.168.1.211",
+        "description": "IP or hostname of the Ohmpilot's own web page. Leave empty to hide the Boost switch."
+      },
+      "boostName": {
+        "title": "Boost switch name",
+        "type": "string",
+        "default": "Ohmpilot Boost"
+      },
+      "pollInterval": {
+        "title": "Poll interval (seconds)",
+        "type": "integer",
+        "default": 60,
+        "minimum": 10,
+        "description": "How often the temperature and Boost state are refreshed in the background."
+      },
+      "boostRefreshDelay": {
+        "title": "Boost refresh delay (seconds)",
+        "type": "integer",
+        "default": 3,
+        "minimum": 0,
+        "description": "How long to wait after switching Boost before reading the state again."
+      }
+    }
+  },
+  "layout": [
+    "name",
+    "host",
+    "ohmpilotHost",
+    "boostName",
+    {
+      "type": "fieldset",
+      "title": "Advanced",
+      "expandable": true,
+      "items": ["pollInterval", "boostRefreshDelay"]
+    }
+  ]
+}
