@@ -1,5 +1,5 @@
-let Service;
-let Characteristic;
+const PLUGIN_NAME = 'homebridge-fronius-ohmpilot';
+const PLATFORM_NAME = 'Ohmpilot';
 
 // Ohmpilot state code (valState in values.xml / CodeOfState in the Solar API)
 const OHMPILOT_STATE_BOOST = 5;
@@ -21,20 +21,69 @@ async function httpGet(url) {
 }
 
 module.exports = (api) => {
-  Service = api.hap.Service;
-  Characteristic = api.hap.Characteristic;
-
-  api.registerAccessory(
-    'homebridge-fronius-ohmpilot',
-    'Ohmpilot',
-    OhmpilotAccessory,
-  );
+  api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, OhmpilotPlatform);
 };
 
-class OhmpilotAccessory {
+class OhmpilotPlatform {
   constructor(log, config, api) {
     this.log = log;
+    this.config = config || {};
     this.api = api;
+    this.cachedAccessories = [];
+
+    api.on('didFinishLaunching', () => {
+      try {
+        this.setup();
+      } catch (error) {
+        this.log.error('Failed to set up Ohmpilot accessory:', error?.message || error);
+      }
+    });
+
+    api.on('shutdown', () => {
+      this.device?.stop();
+    });
+  }
+
+  // Called by Homebridge for each accessory restored from the cache
+  configureAccessory(accessory) {
+    this.cachedAccessories.push(accessory);
+  }
+
+  setup() {
+    // Do nothing until the plugin is configured
+    if (!this.config.host) {
+      this.log.warn('No "host" configured; the Ohmpilot plugin will not start. Configure it in the plugin settings.');
+      return;
+    }
+
+    const uuid = this.api.hap.uuid.generate(`${PLUGIN_NAME}:ohmpilot`);
+    const name = this.config.name || 'Water temperature';
+
+    let accessory = this.cachedAccessories.find((a) => a.UUID === uuid);
+    if (!accessory) {
+      this.log.info('Adding Ohmpilot accessory:', name);
+      accessory = new this.api.platformAccessory(name, uuid);
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    }
+
+    // Remove accessories from older setups that are no longer used
+    const stale = this.cachedAccessories.filter((a) => a.UUID !== uuid);
+    if (stale.length > 0) {
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, stale);
+    }
+
+    this.device = new OhmpilotDevice(this, accessory);
+  }
+}
+
+class OhmpilotDevice {
+  constructor(platform, accessory) {
+    const { Service, Characteristic } = platform.api.hap;
+    const config = platform.config;
+
+    this.log = platform.log;
+    this.api = platform.api;
+    this.Characteristic = Characteristic;
 
     this.name = config.name || 'Water temperature';
     this.host = config.host; // Inverter / Datamanager (Solar API)
@@ -47,14 +96,16 @@ class OhmpilotAccessory {
     this.lastTemperature = undefined;
     this.boostActive = false;
 
-    if (!this.host) {
-      this.log.warn('No "host" configured for Fronius Ohmpilot accessory.');
-    }
-    if (!this.ohmpilotHost) {
-      this.log.warn('No "ohmpilotHost" configured; the Boost switch will not be available.');
-    }
+    accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Manufacturer, 'Fronius')
+      .setCharacteristic(Characteristic.Model, 'Ohmpilot')
+      .setCharacteristic(Characteristic.SerialNumber, 'Ohmpilot-Temperature');
 
-    this.service = new Service.TemperatureSensor(this.name);
+    this.service =
+      accessory.getService(Service.TemperatureSensor) ||
+      accessory.addService(Service.TemperatureSensor, this.name);
+    this.service.setCharacteristic(Characteristic.Name, this.name);
 
     this.service
       .getCharacteristic(Characteristic.CurrentTemperature)
@@ -65,17 +116,28 @@ class OhmpilotAccessory {
       .onGet(this.handleGetTemperature.bind(this));
 
     // Boost switch: ON while the Ohmpilot is in boost, tap again to stop it
+    const existingBoost = accessory.getServiceById(Service.Switch, 'boost');
     if (this.ohmpilotHost) {
-      this.boostService = new Service.Switch(this.boostName, 'boost');
+      this.boostService = existingBoost || accessory.addService(Service.Switch, this.boostName, 'boost');
+      this.boostService.setCharacteristic(Characteristic.Name, this.boostName);
 
       this.boostService
         .getCharacteristic(Characteristic.On)
         .onGet(this.handleGetBoost.bind(this))
         .onSet(this.handleSetBoost.bind(this));
+    } else {
+      this.log.warn('No "ohmpilotHost" configured; the Boost switch will not be available.');
+      if (existingBoost) {
+        accessory.removeService(existingBoost);
+      }
     }
 
+    accessory.on('identify', () => {
+      this.log.info('Identify requested for Fronius Ohmpilot accessory.');
+    });
+
     // Periodic update
-    if (this.pollInterval > 0 && (this.host || this.ohmpilotHost)) {
+    if (this.pollInterval > 0) {
       const intervalMs = this.pollInterval * 1000;
       this.timer = setInterval(() => {
         this.updateTemperature().catch((err) =>
@@ -89,8 +151,16 @@ class OhmpilotAccessory {
       if (this.timer.unref) {
         this.timer.unref();
       }
+    }
 
-      this.updateBoost().catch(() => {});
+    this.updateTemperature().catch(() => {});
+    this.updateBoost().catch(() => {});
+  }
+
+  stop() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = undefined;
     }
   }
 
@@ -98,7 +168,7 @@ class OhmpilotAccessory {
     const temp = await this.fetchTemperature();
     if (typeof temp === 'number') {
       this.lastTemperature = temp;
-      this.service.updateCharacteristic(Characteristic.CurrentTemperature, temp);
+      this.service.updateCharacteristic(this.Characteristic.CurrentTemperature, temp);
       return temp;
     }
 
@@ -108,38 +178,27 @@ class OhmpilotAccessory {
   }
 
   async updateTemperature() {
-    if (!this.host) {
-      return;
-    }
     const temp = await this.fetchTemperature();
     if (typeof temp === 'number') {
       this.lastTemperature = temp;
-      this.service.updateCharacteristic(Characteristic.CurrentTemperature, temp);
+      this.service.updateCharacteristic(this.Characteristic.CurrentTemperature, temp);
     }
   }
 
   async fetchTemperature() {
-    if (!this.host) {
-      this.log.error('No host configured for Fronius Ohmpilot temperature.');
-      return undefined;
-    }
-
-  const url = `http://${this.host}/solar_api/v1/GetOhmPilotRealtimeData.cgi?Scope=System`;
+    const url = `http://${this.host}/solar_api/v1/GetOhmPilotRealtimeData.cgi?Scope=System`;
 
     try {
       const response = await httpGet(url);
       const data = await response.json();
       const temperature =
-        data &&
-        data.Body &&
-        data.Body.Data &&
-        (data.Body.Data.Temperature_Channel_1 ??
-          data.Body.Data[0].Temperature_Channel_1);
+        data?.Body?.Data?.Temperature_Channel_1 ??
+        data?.Body?.Data?.[0]?.Temperature_Channel_1;
 
       if (typeof temperature !== 'number') {
         this.log.error(
           'Unexpected Ohmpilot response structure or missing temperature. Got:',
-          JSON.stringify(data.Body),
+          JSON.stringify(data?.Body),
         );
         return undefined;
       }
@@ -197,7 +256,7 @@ class OhmpilotAccessory {
     const active = await this.fetchBoostState();
     if (typeof active === 'boolean') {
       this.boostActive = active;
-      this.boostService.updateCharacteristic(Characteristic.On, active);
+      this.boostService.updateCharacteristic(this.Characteristic.On, active);
     }
   }
 
@@ -221,23 +280,5 @@ class OhmpilotAccessory {
       this.log.error('Error fetching Ohmpilot boost state:', error?.message || error);
       return undefined;
     }
-  }
-
-  identify(callback) {
-    this.log('Identify requested for Fronius Ohmpilot accessory.');
-    callback();
-  }
-
-  getServices() {
-    const informationService = new Service.AccessoryInformation()
-      .setCharacteristic(Characteristic.Manufacturer, 'Fronius')
-      .setCharacteristic(Characteristic.Model, 'Ohmpilot')
-      .setCharacteristic(Characteristic.SerialNumber, 'Ohmpilot-Temperature');
-
-    const services = [informationService, this.service];
-    if (this.boostService) {
-      services.push(this.boostService);
-    }
-    return services;
   }
 }
