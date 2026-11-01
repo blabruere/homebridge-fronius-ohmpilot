@@ -1,7 +1,7 @@
 {
   "name": "homebridge-fronius-ohmpilot",
   "displayName": "Fronius Ohmpilot",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Homebridge platform plugin that exposes the Fronius Ohmpilot water temperature and a Boost switch in HomeKit.",
   "main": "index.js",
   "files": [
