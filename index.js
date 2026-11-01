@@ -165,16 +165,11 @@ class OhmpilotDevice {
   }
 
   async handleGetTemperature() {
-    const temp = await this.fetchTemperature();
-    if (typeof temp === 'number') {
-      this.lastTemperature = temp;
-      this.service.updateCharacteristic(this.Characteristic.CurrentTemperature, temp);
-      return temp;
+    // Answer from the last poll so the Home app stays responsive
+    if (typeof this.lastTemperature !== 'number') {
+      throw new this.api.hap.HapStatusError(this.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
-
-    // HomeKit expects a number; if we fail, log and return last known or 0
-    this.log.error('Failed to read Ohmpilot temperature, returning last known value.');
-    return this.lastTemperature ?? 0;
+    return this.lastTemperature;
   }
 
   async updateTemperature() {
