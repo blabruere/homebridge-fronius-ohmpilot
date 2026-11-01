@@ -1,5 +1,7 @@
 ## homebridge-fronius-ohmpilot
 
+[![verified-by-homebridge](https://img.shields.io/badge/homebridge-verified-blueviolet?color=%23491F59&style=flat)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
+
 Homebridge plugin that exposes the **Fronius Ohmpilot** temperature as a HomeKit `TemperatureSensor`, plus an optional **Boost** switch. Click on the Temperature sensor in Home, and you can turn on/off boost by clicking on it. The button on/off state means Boost is on/off.
 
 ### Installation
